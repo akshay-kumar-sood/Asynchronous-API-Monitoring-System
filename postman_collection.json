@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "Asynchronous API Monitoring & Job Processing System",
+    "_postman_id": "a91b2c3d-4e5f-6789-0123-abcdef456789",
+    "description": "Comprehensive Postman collection for testing Asynchronous Job Processing, Outbound HTTP Execution, Idempotency, Retries with Exponential Backoff, and Dead Letter Queue (DLQ) operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Job Submission",
+      "item": [
+        {
+          "name": "Submit Outbound HTTP Monitor Job (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 202 Accepted\", function () {",
+                  "    pm.response.to.have.status(202);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"jobId\", jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "monitor-health-001"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"HTTP_MONITOR\",\n  \"payload\": {\n    \"url\": \"https://httpbin.org/status/200\",\n    \"method\": \"GET\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Submit HTTP Webhook Job with Body & Headers (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "webhook-order-101"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"WEBHOOK_NOTIFICATION\",\n  \"payload\": {\n    \"url\": \"https://httpbin.org/post\",\n    \"method\": \"POST\",\n    \"headers\": {\n      \"Content-Type\": \"application/json\",\n      \"X-Custom-Auth\": \"secret-token-demo\"\n    },\n    \"body\": {\n      \"event\": \"ORDER_CREATED\",\n      \"orderId\": \"ORD-9876\",\n      \"total\": 149.99\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Submit Transient Failure Job (Tests Automatic Retries)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"HTTP_MONITOR\",\n  \"payload\": {\n    \"simulateFailureAttempts\": 2\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Submit Permanent Failure Job (Routes to DLQ after 3 attempts)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"HTTP_MONITOR\",\n  \"payload\": {\n    \"fail\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Submit SSRF Attack Vector (Expects Rejection / Security Block)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"HTTP_MONITOR\",\n  \"payload\": {\n    \"url\": \"http://169.254.169.254/latest/meta-data/\",\n    \"method\": \"GET\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Idempotency Verification",
+      "item": [
+        {
+          "name": "Repeat Submission with Identical Idempotency-Key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Returns same job ID with 202 Accepted\", function () {",
+                  "    pm.response.to.have.status(202);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.id).to.eql(pm.collectionVariables.get(\"jobId\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "monitor-health-001"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"HTTP_MONITOR\",\n  \"payload\": {\n    \"url\": \"https://httpbin.org/status/200\",\n    \"method\": \"GET\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Status Tracking & Monitoring",
+      "item": [
+        {
+          "name": "Get Job Details by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}"]
+            }
+          }
+        },
+        {
+          "name": "List All Jobs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "List Jobs Filtered by Status (SUCCESS)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs?status=SUCCESS",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "SUCCESS"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Jobs Filtered by Status (RETRYING)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs?status=RETRYING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "RETRYING"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Jobs Filtered by Status (DEAD)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs?status=DEAD",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "DEAD"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Dead Letter Queue (DLQ)",
+      "item": [
+        {
+          "name": "List All Dead Letter Jobs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/dlq",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dlq"]
+            }
+          }
+        },
+        {
+          "name": "Manually Requeue Dead Job",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/dlq/{{jobId}}/retry",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dlq", "{{jobId}}", "retry"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
