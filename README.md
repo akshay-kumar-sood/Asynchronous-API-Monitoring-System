@@ -300,3 +300,32 @@ $env:DB_PASSWORD="your-neon-password"
 5. **Automatic Retries with Exponential Backoff**: Transient HTTP errors (5xx, 429, timeouts) calculate `next_retry_at = NOW() + (initialInterval * multiplier^(attempts-1))` (1s, 2s, 4s). Worker threads are never blocked with `Thread.sleep`.
 6. **Idempotency**: Enforced via PostgreSQL `UNIQUE` constraint on `idempotency_key`. Repeating the same key returns the existing job ID. Concurrent collisions are caught via `DataIntegrityViolationException` and return the winning record.
 7. **Dead Letter Queue (DLQ)**: Permanently failed jobs are stored in `dead_letter_jobs`. `POST /api/dlq/{jobId}/retry` transactionally resets the job to `QUEUED` and removes the DLQ entry.
+
+---
+
+## 8. Frontend Dashboard — APIRetry
+
+A modern developer dashboard built with **React**, **Vite**, **React Router v6**, and **Lucide React**, sporting a charcoal/dark UI with yellow/lime accents, real-time polling, and responsive status metrics.
+
+### Features:
+- **Dashboard**: Total jobs, succeeded, active/queued, retrying (exponential backoff), and Dead Letter Queue indicators, with status tabs and live backend connection health badge.
+- **Jobs Queue**: Real-time listing with client-side search (by ID, type, target URL), status filter dropdown, and direct navigation to detailed job traces.
+- **Job Details**: Full UUID copy, lifecycle state, attempt progress counter, HTTP response status code, exact timestamps (`createdAt`, `updatedAt`, `nextRetryAt`, `completedAt`), error messages, and formatted JSON payload inspect.
+- **Active Retries**: Displays jobs in `RETRYING` state with next retry scheduled countdown and backoff policy description.
+- **Dead Letter Queue (DLQ)**: Lists exhausted jobs, expandable payload inspector, failure reason diagnostics, and one-click manual requeueing back to the active queue.
+- **Submit Job**: Interactive job dispatcher supporting HTTP methods (GET, POST, PUT, DELETE, PATCH), target URL, headers JSON, request body, preset templates, and automatic idempotency key generation.
+
+### Running Frontend Locally:
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+The dashboard runs at `http://localhost:5173` with automated API proxying to `http://localhost:8080`.
+
+### Production Build:
+```powershell
+cd frontend
+npm run build
+```
+

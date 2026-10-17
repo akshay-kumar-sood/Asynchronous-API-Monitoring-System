@@ -12,5 +12,6 @@ public class ApiMonitoringApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ApiMonitoringApplication.class, args);
+        System.out.println("hello");
     }
 }
