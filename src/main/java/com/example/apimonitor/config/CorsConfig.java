@@ -16,7 +16,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
-                                "https://asynchronous-api-monitoring-system.vercel.app"
+                                "https://failedurl.vercel.app/"
                         )
                         .allowedMethods(
                                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
