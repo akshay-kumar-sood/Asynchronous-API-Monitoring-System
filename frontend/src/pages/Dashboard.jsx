@@ -12,6 +12,10 @@ import {
   ArrowRight,
   Play,
   Pause,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { api } from '../services/api';
 import StatCard from '../components/StatCard';
@@ -21,11 +25,15 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState([]);
   const [dlqJobs, setDlqJobs] = useState([]);
   const [activeTab, setActiveTab] = useState('ALL');
+  const [searchJobId, setSearchJobId] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+
+  const PAGE_SIZE = 10;
 
   const isFetchingRef = useRef(false);
   const isMountedRef = useRef(true);
@@ -92,7 +100,7 @@ export default function Dashboard() {
   const deadCount = jobs.filter((j) => j.status === 'DEAD').length || dlqJobs.length;
 
   // Filter jobs by selected tab
-  const filteredJobs = jobs.filter((job) => {
+  const statusFilteredJobs = jobs.filter((job) => {
     if (activeTab === 'ALL') return true;
     if (activeTab === 'RUNNING') return job.status === 'QUEUED' || job.status === 'PROCESSING';
     if (activeTab === 'SUCCESS') return job.status === 'SUCCESS';
@@ -100,6 +108,40 @@ export default function Dashboard() {
     if (activeTab === 'DEAD') return job.status === 'DEAD' || job.status === 'FAILED';
     return true;
   });
+
+  // Filter jobs by full or partial Job ID search
+  const filteredJobs = statusFilteredJobs.filter((job) => {
+    if (!searchJobId.trim()) return true;
+    return job.id && job.id.toLowerCase().includes(searchJobId.trim().toLowerCase());
+  });
+
+  const matchingCount = filteredJobs.length;
+  const totalPages = Math.max(1, Math.ceil(matchingCount / PAGE_SIZE));
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, matchingCount);
+  const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchJobId(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleClearSearch = () => {
+    setSearchJobId('');
+    setCurrentPage(1);
+  };
+
+  // Keep currentPage in valid range when results change
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [totalPages, currentPage]);
 
   return (
     <div className="content-wrapper">
@@ -221,47 +263,78 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Filter Tabs Bar (matching reference pills) */}
+      {/* Filter Tabs Bar (matching reference pills) & Search Container */}
       <div className="filter-tabs-bar">
-        <div className="tabs-group">
-          <button
-            className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ALL')}
-          >
-            <span>All</span>
-            <span className="tab-count">{totalCount}</span>
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'RUNNING' ? 'active' : ''}`}
-            onClick={() => setActiveTab('RUNNING')}
-          >
-            <span>Running / Queued</span>
-            <span className="tab-count">{runningCount}</span>
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'SUCCESS' ? 'active' : ''}`}
-            onClick={() => setActiveTab('SUCCESS')}
-          >
-            <span>Succeeded</span>
-            <span className="tab-count">{succeededCount}</span>
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'RETRYING' ? 'active' : ''}`}
-            onClick={() => setActiveTab('RETRYING')}
-          >
-            <span>Retrying</span>
-            <span className="tab-count">{retryingCount}</span>
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'DEAD' ? 'active' : ''}`}
-            onClick={() => setActiveTab('DEAD')}
-          >
-            <span>Dead / Failed</span>
-            <span className="tab-count">{deadCount}</span>
-          </button>
+        <div className="filter-tabs-left">
+          <div className="tabs-group">
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`}
+              onClick={() => handleTabChange('ALL')}
+            >
+              <span>All</span>
+              <span className="tab-count">{totalCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'RUNNING' ? 'active' : ''}`}
+              onClick={() => handleTabChange('RUNNING')}
+            >
+              <span>Running / Queued</span>
+              <span className="tab-count">{runningCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'SUCCESS' ? 'active' : ''}`}
+              onClick={() => handleTabChange('SUCCESS')}
+            >
+              <span>Succeeded</span>
+              <span className="tab-count">{succeededCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'RETRYING' ? 'active' : ''}`}
+              onClick={() => handleTabChange('RETRYING')}
+            >
+              <span>Retrying</span>
+              <span className="tab-count">{retryingCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`tab-btn ${activeTab === 'DEAD' ? 'active' : ''}`}
+              onClick={() => handleTabChange('DEAD')}
+            >
+              <span>Dead / Failed</span>
+              <span className="tab-count">{deadCount}</span>
+            </button>
+          </div>
+
+          {/* Search by Job ID Box */}
+          <div className="dashboard-search-container">
+            <Search size={15} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search by Job ID..."
+              value={searchJobId}
+              onChange={handleSearchChange}
+              className="dashboard-search-input"
+              aria-label="Search by Job ID"
+            />
+            {searchJobId && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="search-clear-btn"
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div className="filter-tabs-right">
           <span style={{ color: autoRefresh ? 'var(--accent-yellow)' : 'var(--text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
             <span className={`dot-indicator ${autoRefresh ? 'online' : 'offline'}`} style={{ width: '6px', height: '6px', backgroundColor: autoRefresh ? 'var(--accent-yellow)' : 'var(--text-muted)' }} />
             {autoRefresh ? 'Auto-refresh: 10s' : 'Auto-refresh: Off'}
@@ -272,7 +345,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Jobs Table */}
+      {/* Main Jobs Table with Pagination */}
       <div className="card" style={{ marginBottom: '24px' }}>
         <div className="card-header">
           <h2 className="card-title">Recent Queued Jobs</h2>
@@ -282,10 +355,64 @@ export default function Dashboard() {
           </Link>
         </div>
         <JobsTable
-          jobs={filteredJobs.slice(0, 10)}
+          jobs={paginatedJobs}
           isLoading={isLoading}
-          emptyMessage="No jobs found matching the selected filter."
+          emptyMessage={
+            searchJobId.trim()
+              ? `No jobs found matching Job ID "${searchJobId.trim()}"`
+              : activeTab !== 'ALL'
+              ? `No jobs found with status ${activeTab}.`
+              : 'No jobs found matching the selected filter.'
+          }
+          emptySubtext={
+            searchJobId.trim()
+              ? 'Check the Job ID for typos or clear the search to view all jobs.'
+              : 'Submit a job or wait for background workers to process existing queue items.'
+          }
         />
+
+        {/* Pagination Footer */}
+        <div className="table-pagination-footer">
+          <div className="pagination-info">
+            {matchingCount > 0 ? (
+              <>
+                Showing <span className="pagination-bold">{startIndex + 1}</span>–<span className="pagination-bold">{endIndex}</span> of{' '}
+                <span className="pagination-bold">{matchingCount}</span> {matchingCount === 1 ? 'matching job' : 'matching jobs'}
+              </>
+            ) : (
+              <span className="pagination-empty-text">0 matching jobs</span>
+            )}
+          </div>
+
+          <div className="pagination-controls">
+            <button
+              type="button"
+              className="btn btn-secondary pagination-btn"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1 || matchingCount === 0 || isLoading}
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={16} />
+              <span>Previous</span>
+            </button>
+
+            <span className="pagination-page-indicator">
+              Page <span className="pagination-bold">{currentPage}</span> of{' '}
+              <span className="pagination-bold">{totalPages}</span>
+            </span>
+
+            <button
+              type="button"
+              className="btn btn-secondary pagination-btn"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages || matchingCount === 0 || isLoading}
+              aria-label="Next page"
+            >
+              <span>Next</span>
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* DLQ Recent Failures Snapshot if dead jobs exist */}

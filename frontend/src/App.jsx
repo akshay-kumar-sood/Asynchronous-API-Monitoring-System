@@ -50,7 +50,14 @@ export default function App() {
                   <span className="brand-title">APIRetry</span>
                 </Link>
                 <span className="brand-separator">—</span>
-                <span className="brand-tagline">Asynchronous Job Processing & API Monitoring</span>
+                <span className="brand-tagline" aria-label="Asynchronous Job Processing & API Monitoring">
+                  <span className="tagline-word"><span className="tagline-initial">A</span><span className="tagline-rest">synchronous</span></span>{' '}
+                  <span className="tagline-word"><span className="tagline-initial">J</span><span className="tagline-rest">ob</span></span>{' '}
+                  <span className="tagline-word"><span className="tagline-initial">P</span><span className="tagline-rest">rocessing</span></span>{' '}
+                  <span className="tagline-rest">&</span>{' '}
+                  <span className="tagline-word"><span className="tagline-initial">A</span><span className="tagline-rest">PI</span></span>{' '}
+                  <span className="tagline-word"><span className="tagline-initial">M</span><span className="tagline-rest">onitoring</span></span>
+                </span>
               </div>
               <div className="brand-tech-stack">
                 Java · Spring Boot · React · PostgreSQL · REST APIs · Exponential Backoff · Dead Letter Queue

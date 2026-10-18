@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom';
 import { ExternalLink, Inbox, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
-export default function JobsTable({ jobs = [], isLoading = false, emptyMessage = 'No jobs found in queue' }) {
+export default function JobsTable({
+  jobs = [],
+  isLoading = false,
+  emptyMessage = 'No jobs found in queue',
+  emptySubtext = 'Submit a job or wait for background workers to process existing queue items.',
+}) {
   if (isLoading) {
     return (
       <div className="empty-state">
@@ -19,9 +24,7 @@ export default function JobsTable({ jobs = [], isLoading = false, emptyMessage =
       <div className="empty-state">
         <Inbox size={42} className="empty-state-icon" />
         <div className="empty-state-title">{emptyMessage}</div>
-        <div className="empty-state-text">
-          Submit a job or wait for background workers to process existing queue items.
-        </div>
+        <div className="empty-state-text">{emptySubtext}</div>
       </div>
     );
   }

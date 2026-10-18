@@ -6,8 +6,6 @@ import {
   RefreshCw,
   AlertTriangle,
   PlusCircle,
-  Activity,
-  Server,
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -58,17 +56,6 @@ export default function Sidebar() {
           <span>Submit Job</span>
         </NavLink>
       </nav>
-
-      <div className="sidebar-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <Server size={14} style={{ color: 'var(--accent-yellow)' }} />
-          <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>APIRetry Architecture</span>
-        </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '8px' }}>
-          Java · Spring Boot · React · PostgreSQL · REST APIs · Exponential Backoff · Dead Letter Queue
-        </div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Worker Pool: 4 Core / 8 Max</div>
-      </div>
     </aside>
   );
 }

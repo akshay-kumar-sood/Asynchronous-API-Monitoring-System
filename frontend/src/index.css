@@ -121,7 +121,7 @@ code, pre, .font-mono {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .brand-title {
@@ -141,8 +141,21 @@ code, pre, .font-mono {
 .brand-tagline {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #38bdf8;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--accent-yellow);
+}
+
+.tagline-word {
+  display: inline;
+}
+
+.tagline-initial {
+  color:#facc15;
+}
+
+.tagline-rest {
+  color: var(--accent-yellow);
 }
 
 .brand-tech-stack {
@@ -372,6 +385,13 @@ code, pre, .font-mono {
   gap: 12px;
 }
 
+.filter-tabs-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .tabs-group {
   display: flex;
   align-items: center;
@@ -417,6 +437,65 @@ code, pre, .font-mono {
 .tab-btn.active .tab-count {
   background-color: var(--accent-yellow-bg);
   color: var(--accent-yellow);
+}
+
+/* Dashboard Search by Job ID Box */
+.dashboard-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 240px;
+}
+
+.dashboard-search-input {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 0.825rem;
+  font-family: inherit;
+  padding: 8px 34px 8px 36px;
+  outline: none;
+  width: 100%;
+  height: 38px;
+  transition: all 0.15s ease;
+}
+
+.dashboard-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.dashboard-search-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.25);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  transition: all 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  color: var(--text-main);
+  background-color: var(--bg-card-hover);
+}
+
+.filter-tabs-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 /* Search and Input Fields */
@@ -578,6 +657,64 @@ code, pre, .font-mono {
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Table Pagination */
+.table-pagination-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--bg-card);
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-bold {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.pagination-empty-text {
+  color: var(--text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-page-indicator {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  padding: 0 4px;
 }
 
 /* Status Badges */
